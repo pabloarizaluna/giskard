@@ -8,4 +8,9 @@ enum layers {
   _ADJUST,
 };
 
+#define L_DVORAK 0
+#define L_SYMBOLS 2
+#define L_NUMBERS 4
+#define L_ADJUST 8
+
 #endif

@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include QMK_KEYBOARD_H
 #include <stdio.h>
-#include <print.h>
 #include "keycodes.h"
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -30,7 +29,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
       KC_LCTL, KC_SCLN,    KC_Q,    KC_J,    KC_K,    KC_X,                         KC_B,    KC_M,    KC_W,    KC_V,   KC_Z,   KC_ESC,
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
-                                          KC_LGUI,   MO(1),  KC_SPC,     KC_ENT,   MO(2), KC_RALT
+                                  KC_LGUI,   MO(_NUMBERS),  KC_SPC,     KC_ENT,   MO(_SYMBOLS), KC_RALT
                                       //`--------------------------'  `--------------------------'
 
   ),
@@ -41,9 +40,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
       KC_LSFT, KC_SLSH, KC_ASTR, KC_MINS, KC_PLUS, XXXXXXX,                      XXXXXXX, KC_LEFT, KC_DOWN,   KC_UP,KC_RIGHT, XXXXXXX,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-LCTL_T(KC_F1),   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                        KC_F7,   KC_F8,   KC_F9,  KC_F10,  KC_F11,  KC_F12,
+CTL_T(KC_F1),   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                        KC_F7,   KC_F8,   KC_F9,  KC_F10,  KC_F11,  KC_F12,
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
-                                          KC_LGUI, _______,  KC_SPC,     KC_ENT,   MO(3), KC_RALT
+                                          KC_LGUI, _______,  KC_SPC,     KC_ENT,   MO(_ADJUST), KC_RALT
                                       //`--------------------------'  `--------------------------'
   ),
 
@@ -53,9 +52,9 @@ LCTL_T(KC_F1),   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,                     
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
       KC_LSFT, XXXXXXX, KC_LBRC, KC_LCBR, KC_LPRN, XXXXXXX,                      KC_MINS,  KC_EQL, KC_PIPE, KC_TILD, KC_BSLS,  KC_GRV,
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      KC_LCTL, XXXXXXX, KC_RBRC, KC_RCBR, KC_RPRN, XXXXXXX,                      KC_UNDS, KC_PLUS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      KC_LCTL, XXXXXXX, KC_RBRC, KC_RCBR, KC_RPRN, XXXXXXX,                      KC_UNDS, XXXXXXX, KC_QUES, KC_SLSH, XXXXXXX, XXXXXXX,
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
-                                          KC_LGUI,   MO(3),  KC_SPC,     KC_ENT, _______, KC_RALT
+                                          KC_LGUI,   MO(_ADJUST),  KC_SPC,     KC_ENT, _______, KC_RALT
                                       //`--------------------------'  `--------------------------'
   ),
 
@@ -82,17 +81,20 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 
 void oled_render_layer_state(void) {
   oled_write_P(PSTR("Layer: "), false);
-  switch (layer_state>>1) {
-    case _DVORAK:
+  switch (layer_state) {
+    case L_DVORAK:
       oled_write_ln_P(PSTR("Dvorak"), false);
       break;
-    case _SYMBOLS:
+    case L_SYMBOLS:
       oled_write_ln_P(PSTR("Symbols"), false);
       break;
-    case _NUMBERS:
+    case L_NUMBERS:
       oled_write_ln_P(PSTR("Numbers"), false);
       break;
-    case _ADJUST:
+    case L_ADJUST:
+    case L_ADJUST|L_SYMBOLS:
+    case L_ADJUST|L_NUMBERS:
+    case L_ADJUST|L_SYMBOLS|L_NUMBERS:
       oled_write_ln_P(PSTR("Adjust"), false);
       break;
   }
@@ -170,22 +172,31 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 layer_state_t layer_state_set_user(layer_state_t state) {
   #ifdef RGB_MATRIX_ENABLE
-  if (layer_state_cmp(state, _DVORAK))
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_RAINBOW_MOVING_CHEVRON);
+  if (layer_state_cmp(state, L_DVORAK))
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_CYCLE_LEFT_RIGHT);
   else 
     rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
   
-  switch (state>>1) {
-    case _SYMBOLS:
+  switch (state) {
+    case L_SYMBOLS:
       rgb_matrix_sethsv_noeeprom(HSV_PURPLE);
       break;
-    case _NUMBERS:
+    case L_NUMBERS:
       rgb_matrix_sethsv_noeeprom(HSV_TEAL);
       break;
-    case _ADJUST:
+    case L_ADJUST:
+    case L_ADJUST|L_SYMBOLS:
+    case L_ADJUST|L_NUMBERS:
+    case L_ADJUST|L_SYMBOLS|L_NUMBERS:
       rgb_matrix_sethsv_noeeprom(HSV_RED);
       break;
   }
   #endif
   return state;
 }
+
+#ifdef RGB_MATRIX_ENABLE
+void matrix_init_user(void) {
+  rgb_matrix_mode(RGB_MATRIX_CYCLE_LEFT_RIGHT);
+}
+#endif
