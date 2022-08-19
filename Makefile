@@ -1,9 +1,9 @@
 setup:
 	qmk new-keymap -kb crkbd -km giskard
-	cp -fr ./ ~/qmk_firmware/keyboards/crkbd/keymaps/giskard
 	mkdir ./.build
 
 compile:
+	cp -fr ./ ~/qmk_firmware/keyboards/crkbd/keymaps/giskard
 	qmk compile --clean -kb crkbd -km giskard
 	cp ~/qmk_firmware/*giskard* ./.build
 
