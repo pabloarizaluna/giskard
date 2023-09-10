@@ -1,3 +1,5 @@
+This repo is now archive because is no longer working properly, I am starting a new one.
+---
 # giskard
 
 ## Setup
@@ -23,4 +25,3 @@ First flash with dfu the left side, after the right side
 ```
 make flash
 ```
-
